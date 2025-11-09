@@ -20,7 +20,13 @@ def part_3(sentence: str):
     ### You code goes here ###
     ### Votre code va ici ###
     
-    
-
+    chars = list(sentence)
+    for c in word:
+        for idx, char in enumerate(chars):
+            if char == c and idx not in positions:
+                positions.append(idx)
+                break
+        else:
+            positions.append(-1)
 
     return positions
