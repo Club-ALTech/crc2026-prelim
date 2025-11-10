@@ -5,49 +5,85 @@ This is the template file for the part 5 of the Prelim 1.
 Ceci est le fichier template pour la partie 5 du Prelim 1.
 """
 
-    
-from dataclasses import dataclass
 from typing import TypedDict
+import numpy as np
+
 
 class Coordinate(TypedDict):
     x: int
     y: int
     
-def manhattan_dist(a: Coordinate, b: Coordinate):
+
+def manhattan_dist(a: Coordinate, b: Coordinate) -> int:
     return abs(b["x"]-a["x"]) + abs(b["y"]-a["y"])
+
 
 def next_move(origin: Coordinate, target: Coordinate) -> Coordinate:
     """
     next atomic movement that gets origin closer to coordinate
     retourne un deplacement (ex: {x: 1, y: 0})
     """
+    # Optimisé
+    if target["x"] == origin["x"] or target["y"] == origin["y"]:
+        if target["y"] != origin["y"]:
+            return {"x": 0, "y": np.sign(target["y"] - origin["y"])}
+    return {"x": np.sign(target["x"] - origin["x"]), "y": 0}
+
+
+def get_nearest_food(platypus: Coordinate, foods: list[Coordinate]) -> Coordinate:
+    # Aliments triés selon leur éloignement de l'ornythorinque
+    food_sorted = sorted(foods, key=lambda food_position: manhattan_dist(platypus, food_position))
+
+    # Aliments qui s'éloignent de la même distance de l'ornythorinque: 
+    # est utile pour déterminer la nourriture qui sera consommée en premier en respectant la priorité de déplacement
+    nearest_foods_around: list[Coordinate] = []
+    nearest_food = food_sorted[0]
+    for food in food_sorted:
+        if manhattan_dist(platypus, food) == manhattan_dist(platypus, nearest_food):
+            nearest_foods_around.append(food)
     
-    if origin["x"] == target["x"] and origin["y"] == target["y"]:
-        return {"x": 0, "y": 0} # déplacement nul
-    if origin["x"] < target["x"] :
-        return {"x": 1, "y": 0}
-    if origin["x"] > target["x"]:
-        return {"x": -1, "y": 0}
-    if origin["y"] < target["y"] :
-        return {"x": 0, "y": 1}
-    if origin["y"] > target["y"]:
-        return {"x": 0, "y": -1}
-    print("probleme")
+    # Déplacement par priorité: droite > bas > gauche > haut
+    moving_priority: list[Coordinate] = [{"x": 1, "y": 0}, {"x": 0, "y": 1}, {"x": -1, "y": 0}, {"x": 0, "y": -1}]
+    
+    # Triage des aliments proches selon l’ordre de priorité 
+    order_map = {(move["x"], move["y"]): idx for idx, move in enumerate(moving_priority)}
+    nearest_foods_sorted = sorted(nearest_foods_around, key=lambda food: order_map.get(tuple(next_move(platypus, food).values())))
+
+    return nearest_foods_sorted[0]
 
 
-def print_state(platypus: Coordinate, foods: list[Coordinate], turns_left: int):
+def move_platypus(platypus: Coordinate, foods: list[Coordinate], atomic_move: Coordinate, starvation_counter: int):
+    nearest_food = get_nearest_food(platypus, foods)
+    platypus_new_position: Coordinate = {"x": platypus["x"] + atomic_move["x"], "y": platypus["y"] + atomic_move["y"]}
+
+    if platypus_new_position == nearest_food:
+        starvation_counter = 0
+
+        for food in foods:
+            if food["x"] == platypus_new_position["x"] and food["y"] == platypus_new_position["y"]:
+                foods.pop(foods.index(food))
+                break
+    else:
+        starvation_counter += 1
+    
+    return {"platypus": platypus_new_position, "foods": foods, "starvation_counter": starvation_counter}
+
+
+def print_state(turns: int, round: int, platypus: Coordinate, foods: list[Coordinate], starvation_counter: int):
     BOARD_SIZE = 16
     
-    board = ["_"*16 for _ in range(BOARD_SIZE)]
-    board[platypus["x"]][platypus["y"]] = "X"
-    for f in foods:
-        line_in_board = board[f["x"]] 
-        index_in_line = f["y"]
-        board[f["x"]] = line_in_board[:index_in_line] +"."+ line_in_board[index_in_line+1:]
-    to_print = f"""
-    [turns left: {turns_left}] [foods left: {len(foods)}]
-    {"".join(board)}
-    """
+    board = ["_" * 16 for _ in range(BOARD_SIZE)]
+    board[platypus["y"]] = board[platypus["y"]][:platypus["x"]] + "x" + board[platypus["y"]][platypus["x"] + 1:]
+
+    for food in foods:
+        line_in_board = board[food["y"]] 
+        index_in_line = food["x"]
+        board[food["y"]] = line_in_board[:index_in_line] + "." + line_in_board[index_in_line + 1:]
+    
+    to_print = f"[Round: {round} / {turns}] [Remaining food: {len(foods)}] [Starvation counter: {starvation_counter} / 3]\n   0123456789012345\n"
+    for i in range(16):
+        to_print += f"{' ' * (2 - len(str(i)))}{i} {"".join(board[i])}\n"
+
     print(to_print)
 
 
@@ -65,16 +101,10 @@ def part_5(turns: int, board: list[str]):
     final_answer = "No"
     ### You code goes here ###
     ### Votre code va ici ###
-    remaining_food_count: int
-    platypus_position: dict
-    food_position: list[dict] = []
-    food_position_sorted: list[dict] = [] # liste triée de la nourriture la plus proche à l'ornythorinque à la plus loin
-    starvationCounter = 0
+    food_position: list[Coordinate] = []
+    platypus_position: Coordinate
+    starvation_counter = 0
     round = 0
-    
-    
-    distance_platypus_food = lambda food_position: manhattan_dist(platypus_position, food_position)
-
 
     # Finding platypus initial placement
     for row in range(0, len(board)):
@@ -84,57 +114,38 @@ def part_5(turns: int, board: list[str]):
             break # mauvaise pratique, à changer
     else:
         import sys
-        print("[red] PANIC! pas d'ornithorynque")
+        print("PANIC! pas d'ornithorynque")
         sys.exit()
-
-    print(platypus_position)
 
     # Finding food initial placement
     for row in range(0, len(board)):
         for column in range(0, len(board)):
             if (board[row][column] == "." ) :
                 food_position.append({"x": column, "y": row})
-                
-    remaining_food_count = len(food_position)
+    
+    # Printing intial game state
+    print("\n-------------\nINITIAL STATE\n-------------")
+    print_state(turns, round, platypus_position, food_position, starvation_counter)
 
-    food_position_sorted = food_position.sort(key=distance_platypus_food)
+    # Let the game BEGIIIN !!!
+    while (round < turns and starvation_counter < 3):
+        move = next_move(platypus_position, get_nearest_food(platypus_position, food_position))
 
-    print(food_position_sorted)
-    # print(food_position)
-    print_state(platypus_position, food_position, turns)
-    # print(remainingFood)
-# 
-    # Sorting food position array using a merge sort : time complexity O(nlog(n)) probably
-    # print("----> ", merge_sort(food_position, platypusPosition))
+        result_after_one_move = move_platypus(platypus_position, food_position, move, starvation_counter)
+        platypus_position = result_after_one_move["platypus"]
+        food_position = result_after_one_move["foods"]
+        starvation_counter = result_after_one_move["starvation_counter"]
+        
+        round += 1
+        print_state(turns, round, **result_after_one_move)
+    
+    if starvation_counter < 3:
+        final_answer = "Yes"
+        print("The platypus surviiived ~")
+    else:
+        print("The poor one starved ):")
 
     return final_answer
 
 
 
-""" def merge_sort(array: list[dict], platypus):
-    distancePlatypusFood = lambda platypus, food: abs(platypus["x"] - food["x"]) + abs(platypus["y"] - food["y"])
-
-    if len(array) <= 1:
-        return array
-    
-    middle = len(array) // 2
-    leftHalf = array[middle:]
-    rightHalf = array[:middle]
-
-    merge_sort(leftHalf, platypus)
-    merge_sort(rightHalf, platypus)
-
-    sortedArray = []
-    left_index, right_index = 0, 0
-    while left_index < len(leftHalf) and right_index < len(rightHalf):
-        if distancePlatypusFood(leftHalf[left_index], platypus) <= distancePlatypusFood(rightHalf[right_index], platypus):
-            sortedArray.append(leftHalf[left_index])
-            left_index += 1
-        else:
-            sortedArray.append(rightHalf[right_index])
-            right_index += 1
-
-    sortedArray.extend(leftHalf[left_index:])
-    sortedArray.extend(rightHalf[right_index:])
-
-    return sortedArray """
