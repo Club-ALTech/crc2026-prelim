@@ -15,12 +15,40 @@ def part_3(sentence: str):
     Returns:
         [int]: The position of the letters found
     """
-    word = "ornithorynque"
-    positions = []
+    mot = "ornithorynque"
+    phrase = "ornithorynque est mignon"
+    liste_lettre = []
+    nb_valeur_liste = 0
     ### You code goes here ###
     ### Votre code va ici ###
-    
-    
+    def verification_coordonnees(position_lettre, liste_lettre):
+        print("debug: entre fct")
+        print("debug: liste" + str(liste_lettre))
+        for position_trouve in liste_lettre:
+            print("debug: position trouve " + str( position_trouve))
+            if position_lettre==position_trouve:
+                print("debug: verification " )
+                position_lettre=-1
+                return position_lettre
+                break
+        else:
+            if position_lettre != -1:
+                return position_lettre
+            position_lettre=-1
+            return position_lettre
 
-
-    return positions
+    for lettre in mot:
+        print("Debug: lettre " + lettre) 
+        position_lettre = phrase.find(lettre)
+        print("Debug: position_lettre " + str(position_lettre))
+        if nb_valeur_liste>0:
+            position_lettre=verification_coordonnees(position_lettre, liste_lettre)
+        #liste_lettre.append(position_lettre)
+        #print("Debug: liste_lettre " + str(liste_lettre))
+        #print("Debug: nb_valeur_liste " + str(nb_valeur_liste))
+        liste_lettre.append(position_lettre)
+        print("debug: liste" + str(liste_lettre))
+        nb_valeur_liste +=1
+    
+    print(liste_lettre)
+    return lsite_lettre
