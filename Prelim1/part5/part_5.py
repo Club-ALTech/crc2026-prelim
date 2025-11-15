@@ -5,98 +5,122 @@ This is the template file for the part 5 of the Prelim 1.
 Ceci est le fichier template pour la partie 5 du Prelim 1.
 """
 
-from types import SimpleNamespace
-import numpy as np
-from dataclasses import astuple, dataclass
-import itertools
+from dataclasses import dataclass
+import math 
+
+board = [
+        "___.________.___",
+        "________________",
+        "_______________.",
+        "____.__.._____..",
+        "____.____.._____",
+        "__.____________x",
+        "__._____________",
+        "__________._____",
+        "________________",
+        "._____._________",
+        "________________",
+        "____.___._______",
+        "________________",
+        "______________._",
+        "______._________",
+        "___.___.________",
+    ]
+
 
 @dataclass
-class Coordinate:
+class vec2D:
     x: int
     y: int
 
+@dataclass
+class platypus:
+    origin: vec2D
+    distance: vec2D
+    movement:vec2D
+    alive: True
+    starvation: int
+    food: vec2D
 
-def manhattan_dist(a: Coordinate, b: Coordinate) -> int:
-    return abs(b.x - a.x) + abs(b.y - a.y)
+def vec_is_equal(A: vec2D, B:vec2D):
+    return bool(A.x == B.x and A.y == B.y)
 
+def distance(A:vec2D, B:vec2D):
+    return int(math.fabs(A.x - B.x) + math.fabs(A.y - B.y))
 
-def next_move(origin: Coordinate, target: Coordinate) -> Coordinate:
-    """
-    next atomic movement that gets origin closer to coordinate
-    retourne un deplacement (ex: {x: 1, y: 0})
-    """
-    if target == origin:
-        return Coordinate(0, 0)
-    if target.y != origin.y:
-        return Coordinate(x=0, y=np.sign(target.y - origin.y))
-    return Coordinate(x=np.sign(target.x - origin.x), y=0)
+def find_position(object, board: [str]):
+    position = vec2D(x=0,y=0)
+    for i in range(len(board)):
+        position.x = str(board[i]).find(object)
+        position.y = i
+        if(position.x != -1):
+            break
+    return position
 
+def get_all_food_position(board: [str]):
+    condition = True
+    positions = []
+    copy = board
+    count = -1
+    while(condition):
+        positions.append(find_position(".",copy))
+        count += 1
+        if(positions[count].x == -1):
+            condition = False
+        row = list(copy[positions[count].y])
+        row[positions[count].x] = "_"
+        copy[positions[count].y] = "".join(row)
+    return positions
 
-def get_nearest_food(platypus: Coordinate, foods: list[Coordinate]) -> Coordinate:
-    # Aliments triés selon leur éloignement de l'ornythorinque
+food_positions = get_all_food_position(board)
 
-    def dist_to_platypus(fp):
-        return manhattan_dist(platypus, fp)
+INIT = 0
+SURVIVAL = 1
+DEATH = -1
 
-    food_sorted = sorted(foods, key=dist_to_platypus)
+state = INIT 
 
-    """
-    Aliments qui s'éloignent de la même distance de l'ornythorinque:
-    est utile pour déterminer la nourriture qui sera consommée en premier en respectant la priorité de déplacement
-    """
-    nearest_foods_around: list[Coordinate] = []
-    nearest_food = food_sorted[0]
-    for food in food_sorted:
-        if dist_to_platypus(food) == dist_to_platypus(nearest_food):
-            nearest_foods_around.append(food)
+player = platypus(find_position('x',board),vec2D(x=0,y=0),vec2D(x=0,y=0),True,0,vec2D(x=0,y=0))
 
-    # Déplacement par priorité: droite > bas > gauche > haut
-    moving_priority: list[Coordinate] = map(
-        lambda c: Coordinate(**c),
-        [{"x": 1, "y": 0}, {"x": 0, "y": 1}, {"x": -1, "y": 0}, {"x": 0, "y": -1}],
-    )
+def init_state():
+    all_distances = []
+    for j in range(len(food_positions)):
+        all_distances.append(distance(player.origin,food_positions[j]))
+    copy_all_distances = all_distances.copy()
+    copy_all_distances.sort()
+    index = all_distances.index(copy_all_distances[0])
+    player.food = food_positions[index]
+    print(index, "index")
+    player.movement.x = -player.origin.x + player.food.x
+    player.movement.y = -player.origin.y + player.food.y
+    player.starvation = 0
+    player.distance = copy_all_distances[0]
 
-    # Triage des aliments proches selon l’ordre de priorité
-    order_map = {(move.x, move.y): idx for idx, move in enumerate(moving_priority)}
-    nearest_foods_sorted = sorted(
-        nearest_foods_around,
-        key=lambda food: order_map.get(astuple(next_move(platypus, food))),
-    )
+def survival_state():
+    if(player.movement.x > 0):
+        player.origin.x += 1
+        player.movement.x -= 1
+    elif(player.movement.x < 0):
+        player.origin.x -= 1
+        player.movement.x += 1
+    elif(player.movement.y > 0):
+        player.origin.y += 1
+        player.movement.y -= 1
+    elif(player.movement.y < 0):
+        player.origin.y -= 1
+        player.movement.y += 1
+    player.starvation += 1
+    if(player.starvation > 3):
+        player.alive = False
+        return False
+    if(vec_is_equal(player.origin,player.food)):
+        food_positions.remove(player.food)
+        init_state()
+        print("eat")
 
-    return nearest_foods_sorted[0]
+    
 
-
-def move_platypus(
-    platypus: Coordinate,
-    foods: list[Coordinate],
-    atomic_move: Coordinate,
-    starvation_counter: int,
-):
-    nearest_food = get_nearest_food(platypus, foods)
-    platypus_new_position = Coordinate(
-        x = platypus.x + atomic_move.x, y = platypus.y + atomic_move.y
-    )
-
-    if platypus_new_position == nearest_food:
-        starvation_counter = 0
-
-        for food in foods:
-            if food.x == platypus_new_position.x and food.y == platypus_new_position.y:
-                foods.pop(foods.index(food))
-                break
-    else:
-        starvation_counter += 1
-
-    return SimpleNamespace(
-        **{
-            "platypus": platypus_new_position,
-            "foods": foods,
-            "starvation_counter": starvation_counter,
-        }
-    )
-
-
-def part_5(turns: int, board: list[str]):
+def part_5(turns: int, board: [str]):
     """
     Simulate the Game of platypus
 
@@ -107,45 +131,28 @@ def part_5(turns: int, board: list[str]):
     Returns:
         str: Is the platypus surviving ("Yes" or "No")
     """
-    final_answer = "No"
+    final_answer = "Yes"
     ### You code goes here ###
     ### Votre code va ici ###
-    food_position: list[Coordinate] = []
-    platypus_position: Coordinate
-    starvation_counter = 0
-    round = 0
 
-    # Finding platypus initial placement
-    for row in range(0, len(board)):
-        column = board[row].find("x")
-        if column != -1:
-            platypus_position = Coordinate(x=column, y=row)
-            break
-    else:
-        import sys
-        sys.exit()
+    state = INIT
 
-    # Finding foods initial placement
-    for row, column in itertools.product(range(len(board)), range(len(board))):
-        if board[row][column] == ".":
-            food_position.append(Coordinate(x=column, y=row))
+    for i in range(turns):
+        if(state == INIT):
+            init_state()
+            print(player)
+            #print(player.food,"food")
+            state = SURVIVAL
+        elif(state == SURVIVAL):
+            if(survival_state() == False):
+                state = DEATH
+            print(player,"survival")
+        if(state == DEATH):
+            final_answer = "No"
 
-    # Let the game BEGIIIN !!!
-    while round < turns and starvation_counter < 3:
-        move = next_move(
-            platypus_position, get_nearest_food(platypus_position, food_position)
-        )
-
-        result_after_one_move = move_platypus(
-            platypus_position, food_position, move, starvation_counter
-        )
-        platypus_position = result_after_one_move.platypus
-        food_position = result_after_one_move.foods
-        starvation_counter = result_after_one_move.starvation_counter
-
-        round += 1
-
-    if starvation_counter < 3:
-        final_answer = "Yes"
-
+    print(final_answer)
     return final_answer
+
+part_5(11,board)
+#get_all_food_position(board)
+#print(find_position('x',board))

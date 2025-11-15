@@ -5,10 +5,9 @@ This is the template file for the part 4 of the Prelim 1.
 Ceci est le fichier template pour la partie 4 du Prelim 1.
 """
 
-def get_distance(platypus: tuple, prey: tuple) -> float:
-    return ((prey[0] - platypus[0]) ** 2 + (prey[1] - platypus[1]) ** 2 + (prey[2] - platypus[2]) ** 2) ** 0.5
+import math
 
-def part_4(positions: list[(int, int, int)]):
+def part_4(positions: [(int, int, int)]):
     """
     Find the closest preys to the platypus
 
@@ -21,10 +20,23 @@ def part_4(positions: list[(int, int, int)]):
     order = []
     ### You code goes here ###
     ### Votre code va ici ###
-    platypus: tuple = positions[0]
-    preys: list[tuple] = positions[1:]
-    preys_sorted = sorted(preys, key=lambda prey: get_distance(platypus, prey))
 
-    order = [preys.index(prey) + 1 for prey in preys_sorted]
+    origin = positions[0]
+    Delta = []
+    
+    for i in range(1,len(positions)):
+        delta = []
+        for j in range(3):
+            delta.append(positions[i][j] - origin[j])
+        D = math.sqrt(math.pow(delta[0],2) + math.pow(delta[1],2) + math.pow(delta[2],2))
+        Delta.append(D)
 
+    DeltaCopy = Delta.copy()
+    DeltaCopy.sort()
+    for k in range(0,len(DeltaCopy)):
+        order.append(Delta.index(DeltaCopy[k]) + 1)
+
+    print(order)
     return order
+
+part_4([(16, 17, 5), (4, 4, 9), (11, 16, 14), (8, 4, 9), (11, 18, 8), (17, 2, 15), (10, 18, 7)])

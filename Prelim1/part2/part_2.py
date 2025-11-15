@@ -1,12 +1,10 @@
+
 # For your imports look at the rulebook to see what is allowed
 # Pour les import permis allez vous référer au livre des règlements
 """part_2.py
 This is the template file for the part 2 of the Prelim 1.
 Ceci est le fichier template pour la partie 2 du Prelim 1.
 """
-
-import math
-
 
 def part_2(w: int, h: int, l: int, a: int):
     """
@@ -25,8 +23,12 @@ def part_2(w: int, h: int, l: int, a: int):
     ### You code goes here ###
     ### Votre code va ici ###
 
-    volume = (math.pi*w*h*l)/12
-    production = a*0.1 if a*0.1 <= 1.0 else 1.0
-    milk = round(volume * production, 2)
+    pi = 3.14159
+    
+    V = (4/3) * pi * w/2 * h/2 * l/2
+
+    production = a * 0.1 if a * 0.1 <= 1.0 else 1.0
+
+    milk = round((V/2) * production,2)
 
     return milk
