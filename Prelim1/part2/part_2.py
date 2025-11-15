@@ -25,8 +25,8 @@ def part_2(w: int, h: int, l: int, a: int):
     ### You code goes here ###
     ### Votre code va ici ###
 
-    volume = (math.pi*w*h*l)/12
-    production = a*0.1 if a*0.1 <= 1.0 else 1.0
+    volume = (math.pi * w * h * l) / 12
+    production = a * 0.1 if a * 0.1 <= 1.0 else 1.0
     milk = round(volume * production, 2)
 
     return milk

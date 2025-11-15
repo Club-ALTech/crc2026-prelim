@@ -5,10 +5,12 @@ This is the template file for the part 5 of the Prelim 1.
 Ceci est le fichier template pour la partie 5 du Prelim 1.
 """
 
-from types import SimpleNamespace
-import numpy as np
-from dataclasses import astuple, dataclass
 import itertools
+from dataclasses import astuple, dataclass
+from types import SimpleNamespace
+
+import numpy as np
+
 
 @dataclass
 class Coordinate:
@@ -74,7 +76,7 @@ def move_platypus(
 ):
     nearest_food = get_nearest_food(platypus, foods)
     platypus_new_position = Coordinate(
-        x = platypus.x + atomic_move.x, y = platypus.y + atomic_move.y
+        x=platypus.x + atomic_move.x, y=platypus.y + atomic_move.y
     )
 
     if platypus_new_position == nearest_food:
@@ -123,6 +125,7 @@ def part_5(turns: int, board: list[str]):
             break
     else:
         import sys
+
         sys.exit()
 
     # Finding foods initial placement

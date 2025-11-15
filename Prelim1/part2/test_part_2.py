@@ -8,9 +8,10 @@ from part2.part_2 import part_2
 
 
 def test_from_problem_description():
-    assert part_2(w = 10, h = 14, l = 50, a = 4) == 733.04
-    assert part_2(w = 13, h = 10, l = 47, a = 3) == 479.88
-    assert part_2(w = 16, h = 17, l = 63, a = 7) == 3140.34
+    assert part_2(w=10, h=14, l=50, a=4) == 733.04
+    assert part_2(w=13, h=10, l=47, a=3) == 479.88
+    assert part_2(w=16, h=17, l=63, a=7) == 3140.34
+
 
 def test_supplementaire():
-    assert part_2(w = 9, h = 12, l = 40, a = 8) == 904.78
+    assert part_2(w=9, h=12, l=40, a=8) == 904.78

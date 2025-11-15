@@ -5,8 +5,14 @@ This is the template file for the part 4 of the Prelim 1.
 Ceci est le fichier template pour la partie 4 du Prelim 1.
 """
 
+
 def get_distance(platypus: tuple, prey: tuple) -> float:
-    return ((prey[0] - platypus[0]) ** 2 + (prey[1] - platypus[1]) ** 2 + (prey[2] - platypus[2]) ** 2) ** 0.5
+    return (
+        (prey[0] - platypus[0]) ** 2
+        + (prey[1] - platypus[1]) ** 2
+        + (prey[2] - platypus[2]) ** 2
+    ) ** 0.5
+
 
 def part_4(positions: list[(int, int, int)]):
     """
