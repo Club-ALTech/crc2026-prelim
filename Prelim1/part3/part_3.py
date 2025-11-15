@@ -51,4 +51,4 @@ def part_3(sentence: str):
         nb_valeur_liste +=1
     
     print(liste_lettre)
-    return lsite_lettre
+    return liste_lettre
