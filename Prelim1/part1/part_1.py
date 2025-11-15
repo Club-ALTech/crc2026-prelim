@@ -6,7 +6,7 @@ Ceci est le fichier template pour la partie 1 du Prelim 1.
 """
 
 # just a small helper to visualize the tail
-def print_tail(tail: [str]):
+def print_tail(tail: list[str]):
     for line in tail:
         print(line)
 

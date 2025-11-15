@@ -27,5 +27,4 @@ def part_4(positions: list[(int, int, int)]):
 
     order = [preys.index(prey) + 1 for prey in preys_sorted]
 
-    print(order)
     return order

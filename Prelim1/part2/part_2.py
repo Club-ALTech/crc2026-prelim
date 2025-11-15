@@ -5,6 +5,9 @@ This is the template file for the part 2 of the Prelim 1.
 Ceci est le fichier template pour la partie 2 du Prelim 1.
 """
 
+import math
+
+
 def part_2(w: int, h: int, l: int, a: int):
     """
     Finds the amount of milk produced by the platypus
@@ -22,6 +25,8 @@ def part_2(w: int, h: int, l: int, a: int):
     ### You code goes here ###
     ### Votre code va ici ###
 
-
+    volume = (math.pi*w*h*l)/12
+    production = a*0.1 if a*0.1 <= 1.0 else 1.0
+    milk = round(volume * production, 2)
 
     return milk
