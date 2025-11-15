@@ -8,6 +8,7 @@ Ceci est le fichier template pour la partie 5 du Prelim 1.
 from types import SimpleNamespace
 import numpy as np
 from dataclasses import astuple, dataclass
+import itertools
 
 
 @dataclass
@@ -25,25 +26,27 @@ def next_move(origin: Coordinate, target: Coordinate) -> Coordinate:
     next atomic movement that gets origin closer to coordinate
     retourne un deplacement (ex: {x: 1, y: 0})
     """
-    # Optimisé
-    if target.x == origin.x or target.y == origin.y:
-        if target.y != origin.y:
-            return Coordinate(x=0, y=np.sign(target.y - origin.y))
+    if target == origin:
+        return Coordinate(0, 0)
+    if target.y != origin.y:
+        return Coordinate(x=0, y=np.sign(target.y - origin.y))
     return Coordinate(x=np.sign(target.x - origin.x), y=0)
 
 
 def get_nearest_food(platypus: Coordinate, foods: list[Coordinate]) -> Coordinate:
     # Aliments triés selon leur éloignement de l'ornythorinque
-    food_sorted = sorted(
-        foods, key=lambda food_position: manhattan_dist(platypus, food_position)
-    )
+
+    def dist_to_platypus(fp):
+        return manhattan_dist(platypus, fp)
+
+    food_sorted = sorted(foods, key=dist_to_platypus)
 
     # Aliments qui s'éloignent de la même distance de l'ornythorinque:
     # est utile pour déterminer la nourriture qui sera consommée en premier en respectant la priorité de déplacement
     nearest_foods_around: list[Coordinate] = []
     nearest_food = food_sorted[0]
     for food in food_sorted:
-        if manhattan_dist(platypus, food) == manhattan_dist(platypus, nearest_food):
+        if dist_to_platypus(food) == dist_to_platypus(nearest_food):
             nearest_foods_around.append(food)
 
     # Déplacement par priorité: droite > bas > gauche > haut
@@ -152,10 +155,9 @@ def part_5(turns: int, board: list[str]):
         sys.exit()
 
     # Finding food initial placement
-    for row in range(0, len(board)):
-        for column in range(0, len(board)):
-            if board[row][column] == ".":
-                food_position.append(Coordinate(x=column, y=row))
+    for row, column in itertools.product(range(len(board)), range(len(board))):
+        if board[row][column] == ".":
+            food_position.append(Coordinate(x=column, y=row))
 
     # Printing intial game state
     print("\n-------------\nINITIAL STATE\n-------------")
