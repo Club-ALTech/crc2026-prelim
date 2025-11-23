@@ -5,9 +5,11 @@ This is the template file for the part 5 of the Prelim 1.
 Ceci est le fichier template pour la partie 5 du Prelim 1.
 """
 
-from types import SimpleNamespace
-import numpy as np
+import itertools
 from dataclasses import astuple, dataclass
+from types import SimpleNamespace
+
+import numpy as np
 
 
 @dataclass
@@ -25,25 +27,29 @@ def next_move(origin: Coordinate, target: Coordinate) -> Coordinate:
     next atomic movement that gets origin closer to coordinate
     retourne un deplacement (ex: {x: 1, y: 0})
     """
-    # Optimisé
-    if target.x == origin.x or target.y == origin.y:
-        if target.y != origin.y:
-            return Coordinate(x=0, y=np.sign(target.y - origin.y))
+    if target == origin:
+        return Coordinate(0, 0)
+    if target.y != origin.y:
+        return Coordinate(x=0, y=np.sign(target.y - origin.y))
     return Coordinate(x=np.sign(target.x - origin.x), y=0)
 
 
 def get_nearest_food(platypus: Coordinate, foods: list[Coordinate]) -> Coordinate:
     # Aliments triés selon leur éloignement de l'ornythorinque
-    food_sorted = sorted(
-        foods, key=lambda food_position: manhattan_dist(platypus, food_position)
-    )
 
-    # Aliments qui s'éloignent de la même distance de l'ornythorinque:
-    # est utile pour déterminer la nourriture qui sera consommée en premier en respectant la priorité de déplacement
+    def dist_to_platypus(fp):
+        return manhattan_dist(platypus, fp)
+
+    food_sorted = sorted(foods, key=dist_to_platypus)
+
+    """
+    Aliments qui s'éloignent de la même distance de l'ornythorinque:
+    est utile pour déterminer la nourriture qui sera consommée en premier en respectant la priorité de déplacement
+    """
     nearest_foods_around: list[Coordinate] = []
     nearest_food = food_sorted[0]
     for food in food_sorted:
-        if manhattan_dist(platypus, food) == manhattan_dist(platypus, nearest_food):
+        if dist_to_platypus(food) == dist_to_platypus(nearest_food):
             nearest_foods_around.append(food)
 
     # Déplacement par priorité: droite > bas > gauche > haut
@@ -92,34 +98,6 @@ def move_platypus(
     )
 
 
-def print_state(
-    turns: int,
-    round: int,
-    platypus: Coordinate,
-    foods: list[Coordinate],
-    starvation_counter: int,
-):
-    BOARD_SIZE = 16
-
-    board = ["_" * 16 for _ in range(BOARD_SIZE)]
-    board[platypus.y] = (
-        board[platypus.y][: platypus.x] + "x" + board[platypus.y][platypus.x + 1 :]
-    )
-
-    for food in foods:
-        line_in_board = board[food.y]
-        index_in_line = food.x
-        board[food.y] = (
-            line_in_board[:index_in_line] + "." + line_in_board[index_in_line + 1 :]
-        )
-
-    to_print = f"[Round: {round} / {turns}] [Remaining food: {len(foods)}] [Starvation counter: {starvation_counter} / 3]\n   0123456789012345\n"
-    for i in range(16):
-        to_print += f"{' ' * (2 - len(str(i)))}{i} {''.join(board[i])}\n"
-
-    print(to_print)
-
-
 def part_5(turns: int, board: list[str]):
     """
     Simulate the Game of platypus
@@ -144,22 +122,16 @@ def part_5(turns: int, board: list[str]):
         column = board[row].find("x")
         if column != -1:
             platypus_position = Coordinate(x=column, y=row)
-            break  # mauvaise pratique, à changer
+            break
     else:
         import sys
 
-        print("PANIC! pas d'ornithorynque")
         sys.exit()
 
-    # Finding food initial placement
-    for row in range(0, len(board)):
-        for column in range(0, len(board)):
-            if board[row][column] == ".":
-                food_position.append(Coordinate(x=column, y=row))
-
-    # Printing intial game state
-    print("\n-------------\nINITIAL STATE\n-------------")
-    print_state(turns, round, platypus_position, food_position, starvation_counter)
+    # Finding foods initial placement
+    for row, column in itertools.product(range(len(board)), range(len(board))):
+        if board[row][column] == ".":
+            food_position.append(Coordinate(x=column, y=row))
 
     # Let the game BEGIIIN !!!
     while round < turns and starvation_counter < 3:
@@ -175,12 +147,8 @@ def part_5(turns: int, board: list[str]):
         starvation_counter = result_after_one_move.starvation_counter
 
         round += 1
-        print_state(turns, round, **result_after_one_move.__dict__)
 
     if starvation_counter < 3:
         final_answer = "Yes"
-        print("The platypus surviiived ~")
-    else:
-        print("The poor one starved ):")
 
     return final_answer
