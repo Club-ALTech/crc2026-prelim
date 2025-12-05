@@ -5,16 +5,13 @@ This is the template file for the part 1 of the Prelim 2.
 Ceci est le fichier template pour la partie 1 du Prelim 2.
 """
 
+def get_longest_ladders(ladders: list[tuple[int, int]]):
+    if not ladders:
+        return []
+    
+    longest_length = max(end - start for start, end in ladders)
 
-"""
-    TODO : What if there is at least two longest ladders? Which one should be used?
-           Should we simulate the game in each case and pick the one with the min steps?
-    TODO : Test all the possible cases, don't be lazy o-o
-"""
-
-
-def get_longest_ladder(ladders: list[tuple[int, int]]):
-    return max(ladders, key=lambda ladder: ladder[1] - ladder[0])
+    return [ladder for ladder in ladders if ladder[1] - ladder[0] == longest_length]
 
 
 def should_be_avoided(snakes: list[tuple[int, int]], ladders: list[tuple[int, int]], next_position: int, next_targeted_ladder: tuple[int, int]) -> bool:
@@ -32,14 +29,17 @@ def should_be_avoided(snakes: list[tuple[int, int]], ladders: list[tuple[int, in
     return False
 
 
-def get_next_targeted_ladder(position: int, ladders: list[tuple[int, int]]):
+def get_next_targeted_ladder(position: int, ladders: list[tuple[int, int]], preferred_longest: tuple[int, int]):
     # All the useful ladders that will help us reach the longest one (included), aka shortest way
     targets: list[tuple[int, int]] = []
 
     if not ladders:
         return None
     
-    longest_ladder = get_longest_ladder(ladders)
+    if preferred_longest:
+        longest_ladder = preferred_longest
+    else:
+        longest_ladder = get_longest_ladders(ladders)[0]
 
     if not longest_ladder:
         return None
@@ -47,7 +47,7 @@ def get_next_targeted_ladder(position: int, ladders: list[tuple[int, int]]):
     # If we already used or passed the longest ladder, then if there is still ladders remaining, use them
     if position >= longest_ladder[1]:
         if ladders[ladders.index(longest_ladder) + 1:]:
-            return get_next_targeted_ladder(position, ladders[ladders.index(longest_ladder) + 1:])
+            return get_next_targeted_ladder(position, ladders[ladders.index(longest_ladder) + 1:], None)
         return None
 
     # Find the ladders that will help us reach the longest one, or finish the game (pos 100)
@@ -70,7 +70,7 @@ def get_next_targeted_ladder(position: int, ladders: list[tuple[int, int]]):
     return None
     
 
-def get_next_move(d: int, position: int, ladders: list[tuple[int, int]], snakes: list[tuple[int, int]], target: int) -> int:    
+def get_next_move(d: int, position: int, ladders: list[tuple[int, int]], snakes: list[tuple[int, int]], target: int, preferred_longest: tuple[int, int]) -> int:    
     # The distance separating the current position from the target
     moves_remaining = target - position
 
@@ -78,7 +78,7 @@ def get_next_move(d: int, position: int, ladders: list[tuple[int, int]], snakes:
     if moves_remaining > d:
         moves_remaining = d
 
-    next_targeted_ladder = get_next_targeted_ladder(position, ladders)
+    next_targeted_ladder = get_next_targeted_ladder(position, ladders, preferred_longest)
 
     if next_targeted_ladder:
         # If moving 'd' blocks takes us past the end of the targeted ladder, then it's useless, just move normally (check TEST 3)
@@ -86,10 +86,32 @@ def get_next_move(d: int, position: int, ladders: list[tuple[int, int]], snakes:
             moves_remaining = d
 
     # Before moving, check if the target should be avoided (snakes ... etc)
-    while should_be_avoided(snakes, ladders, moves_remaining + position, next_targeted_ladder):
+    while moves_remaining > 1 and should_be_avoided(snakes, ladders, moves_remaining + position, next_targeted_ladder):
         moves_remaining -= 1
 
     return moves_remaining
+
+
+def simulate(d: int, ladders: list[tuple[int, int]], snakes: list[tuple[int, int]], preferred_longest: tuple[int, int]):
+    steps = 0
+    current_position = 0
+
+    while current_position != 100:
+        next_targeted_ladder = get_next_targeted_ladder(current_position, ladders, preferred_longest)
+
+        if next_targeted_ladder:
+            while current_position < next_targeted_ladder[0]:
+                current_position += get_next_move(d, current_position, ladders, snakes, next_targeted_ladder[0], preferred_longest)
+                steps += 1
+
+            if current_position < next_targeted_ladder[1]:
+                current_position = next_targeted_ladder[1]
+        else:
+            current_position += get_next_move(d, current_position, ladders, snakes, 100, preferred_longest)
+            steps += 1
+
+    return steps
+
 
 
 def part_1(d: int, ladders: list[tuple[int, int]], snakes: list[tuple[int, int]]):
@@ -106,76 +128,27 @@ def part_1(d: int, ladders: list[tuple[int, int]], snakes: list[tuple[int, int]]
     """
     steps = 0
     ### YOUR CODE GOES HERE ###
-    current_position = 0
-    next_targeted_ladder: tuple[int, int]
+    
+    """
+        - The code below handles the situation where the game contains multiple equally
+        long ladders, each leading to a different outcome
+        - To determine the best overall path, the game is simulated once for each ladder
+        treated as the preferred longest ladder
+        - The minimum number of steps among all simulations is then returned
+    """
+    longest_ladders = get_longest_ladders(ladders)
 
-    while current_position != 100:
-        next_targeted_ladder = get_next_targeted_ladder(current_position, ladders)
+    if not longest_ladders:
+        return simulate(d, ladders, snakes, None)
 
-        if next_targeted_ladder:
-            while current_position < next_targeted_ladder[0]:
-                current_position += get_next_move(d, current_position, ladders, snakes, next_targeted_ladder[0])
-                steps += 1
-                print(current_position, steps)
+    if len(longest_ladders) == 1:
+        return simulate(d, ladders, snakes, longest_ladders[0])
 
-            if current_position < next_targeted_ladder[1]:
-                current_position = next_targeted_ladder[1]
-                print(current_position, steps)
-        else:
-            current_position += get_next_move(d, current_position, ladders, snakes, 100)
-            steps += 1
-            print(current_position, steps)
+    best_steps = simulate(d, ladders, snakes, None)
+    for ladder in longest_ladders:
+        steps = simulate(d, ladders, snakes, ladder)
 
-    return steps
+        if steps < best_steps:
+            best_steps = steps
 
-
-
-
-part_1(
-    d = 6,
-    ladders = [(1, 38), (4, 14),(21, 42), (28, 84)],
-    snakes = [(48, 26), (49, 11), (62, 19), (87, 24)]
-)
-
-print("==================================")
-part_1(
-    d = 8,
-    ladders = [(7, 50)],
-    snakes = [(80, 30)]
-)
-
-print("==================================")
-part_1(
-    d = 10,
-    ladders = [(4, 9), (41, 99)],
-    snakes = [(31, 5), (50, 20)]
-)
-
-print("==================================")
-part_1(
-    d = 6,
-    ladders = [(1, 38), (4, 14),(21, 42), (28, 84), (88, 99)],
-    snakes = [(48, 26), (49, 11), (62, 19), (87, 24)]
-)
-
-""" print("==================================")
-part_1(
-    d = 6,
-    ladders = [(1, 38), (4, 14), (8, 18), (21, 42), (28, 84)],
-    snakes = [(48, 26), (49, 11), (62, 19), (87, 24)]
-)
-
-print("==================================")
-part_1(
-    d = 6,
-    ladders = [(1, 38), (4, 14), (8, 18), (21, 42), (28, 50), (51, 73)],
-    snakes = [(48, 26), (49, 11), (62, 19), (87, 24)]
-)
-
-print("==================================")
-part_1(
-    d = 6,
-    ladders = [(1, 11), (4, 14), (8, 28), (21, 41), (51, 71)],
-    snakes = [(48, 26), (49, 11), (62, 19), (87, 24)]
-)
- """
+    return best_steps
