@@ -102,7 +102,7 @@ class Board:
             bottom_is_valid = False
             left_is_valid = False
 
-            if pos_y - 1 <= 0 or (
+            if pos_y - 1 < 0 or (
                 self.board[pos_y - 1][pos_x].is_blank() or 
                 tile_copy.top == self.board[pos_y - 1][pos_x].bottom
             ):
@@ -120,7 +120,7 @@ class Board:
             ):
                 bottom_is_valid = True
 
-            if pos_x - 1 <= 0 or (
+            if pos_x - 1 < 0 or (
                 self.board[pos_y][pos_x - 1].is_blank() or 
                 tile_copy.left == self.board[pos_y][pos_x - 1].right
             ):
@@ -139,10 +139,10 @@ class Board:
         ### VOTRE CODE VA ICI ###
 
         return self.board[pos_y][pos_x].is_blank() and (
-            pos_y - 1 > 0 and not self.board[pos_y - 1][pos_x].is_blank() or
+            pos_y - 1 >= 0 and not self.board[pos_y - 1][pos_x].is_blank() or
             pos_x + 1 < len(self.board[pos_y]) and not self.board[pos_y][pos_x + 1].is_blank() or
             pos_y + 1 < len(self.board) and not self.board[pos_y + 1][pos_x].is_blank() or
-            pos_x - 1 > 0 and not self.board[pos_y][pos_x - 1].is_blank()
+            pos_x - 1 >= 0 and not self.board[pos_y][pos_x - 1].is_blank()
         )
 
 
