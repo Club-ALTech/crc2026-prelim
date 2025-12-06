@@ -60,7 +60,7 @@ class Tile:
         return True if self.sides[0] == "n" else False
 
     def rotate(self):
-        return self.sides.insert(0, self.sides.pop())
+        self.sides.insert(0, self.sides.pop())
     
 
 class Board:
@@ -89,18 +89,64 @@ class Board:
         for tile in tileSet:
             self.board[tile.x][tile.y] = tile
     
-    def is_valid_placement(self, pos_x, pos_y):
+    def is_valid_placement(self, tile, pos_x, pos_y):
         ### YOUR CODE GOES HERE ###
         ### VOTRE CODE VA ICI ###
-        pass
+
+        rotation_count = 0
+        tile_copy = Tile(tile.sides)
+        
+        while rotation_count < 4:
+            top_is_valid = False
+            right_is_valid = False
+            bottom_is_valid = False
+            left_is_valid = False
+
+            if pos_y - 1 < 0 or (
+                self.board[pos_y - 1][pos_x].is_blank() or 
+                tile_copy.top == self.board[pos_y - 1][pos_x].bottom
+            ):
+                top_is_valid = True
+
+            if pos_x + 1 >= len(self.board[pos_y]) or (
+                self.board[pos_y][pos_x + 1].is_blank() or 
+                tile_copy.right == self.board[pos_y][pos_x + 1].left
+            ):
+                right_is_valid = True
+
+            if pos_y + 1 >= len(self.board) or (
+                self.board[pos_y + 1][pos_x].is_blank() or 
+                tile_copy.bottom == self.board[pos_y + 1][pos_x].top
+            ):
+                bottom_is_valid = True
+
+            if pos_x - 1 < 0 or (
+                self.board[pos_y][pos_x - 1].is_blank() or 
+                tile_copy.left == self.board[pos_y][pos_x - 1].right
+            ):
+                left_is_valid = True
+
+            if top_is_valid and right_is_valid and bottom_is_valid and left_is_valid:
+                return True
+            
+            tile_copy.rotate()
+            rotation_count += 1
+        
+        return False
 
     def is_adjacent(self, pos_x, pos_y):
         ### YOUR CODE GOES HERE ###
         ### VOTRE CODE VA ICI ###
-        pass
+
+        return self.board[pos_y][pos_x].is_blank() and (
+            pos_y - 1 >= 0 and not self.board[pos_y - 1][pos_x].is_blank() or
+            pos_x + 1 < len(self.board[pos_y]) and not self.board[pos_y][pos_x + 1].is_blank() or
+            pos_y + 1 < len(self.board) and not self.board[pos_y + 1][pos_x].is_blank() or
+            pos_x - 1 >= 0 and not self.board[pos_y][pos_x - 1].is_blank()
+        )
 
 
-def part_1(tile: Tile, board: Board):
+def part_4(tile: Tile, board: Board):
     """
     Find all possible locations the given Tile can be placed on the Board
 
@@ -115,6 +161,15 @@ def part_1(tile: Tile, board: Board):
     ### YOUR CODE GOES HERE ###
     ### VOTRE CODE VA ICI ###
 
+    adjacent_positions = []
+    
+    for y in range(len(board.board)):
+        for x in range(len(board[y])):
+            if board.is_adjacent(x, y):
+                adjacent_positions.append((y, x))
 
+    for position in adjacent_positions:
+        if board.is_valid_placement(tile, position[1], position[0]):
+            positions.append(position)
 
     return positions

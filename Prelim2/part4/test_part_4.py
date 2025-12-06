@@ -5,7 +5,7 @@
 # Pour rouler les tests avec pytest utilisez le terminal dans le bon folder et exécutez la commande pytest (voir le fichier donnée sur les tests)
 
 from collections import Counter
-from part4 import Tile, Board, part_4
+from part4.part_4 import Tile, Board, part_4
 
 tileSet1 = [
     Tile("crgr", 1, 1)
