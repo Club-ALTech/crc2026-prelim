@@ -57,7 +57,7 @@ def part_2(vx0: float, vy0: float, angle_deg: float):
         x = x + vx * DELTA_T
         y = y + vy * DELTA_T
 
-        if y <= 0:
+        if round(y, 3) < 0 or (len(coordinates) != 0 and coordinates[-1][1] == 0):
             break
 
         coordinates.append((round(x, 3), round(y, 3)))
