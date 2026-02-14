@@ -8,7 +8,7 @@ import random
 ### These are the 3 variables you can modify!
 seed = 0
 use_seed = False
-nbr_examples = 3
+nbr_examples = 1
 
 #### DO NOT MODIFY AFTER THIS ######
 
@@ -45,9 +45,9 @@ def test():
         pgx = random.randint(0, 15)
         pgy = random.randint(0, 15)
 
-        penguins1 = [(convert(prx), convert(pry), ' R '), (convert(pyx), convert(pyy), ' Y '), (convert(pbx), convert(pby), ' B '), (convert(pgx), convert(pgy), ' G ')]
-        penguins2 = [(convert(prx), convert(pry), ' R '), (convert(pyx), convert(pyy), ' Y '), (convert(pbx), convert(pby), ' B '), (convert(pgx), convert(pgy), ' G ')]
-        penguins3 = [(convert(prx), convert(pry), ' R '), (convert(pyx), convert(pyy), ' Y '), (convert(pbx), convert(pby), ' B '), (convert(pgx), convert(pgy), ' G ')]
+        penguins1 = [(convert(prx), convert(pry), 'R'), (convert(pyx), convert(pyy), 'Y'), (convert(pbx), convert(pby), 'B'), (convert(pgx), convert(pgy), 'G')]
+        penguins2 = [(convert(prx), convert(pry), 'R'), (convert(pyx), convert(pyy), 'Y'), (convert(pbx), convert(pby), 'B'), (convert(pgx), convert(pgy), 'G')]
+        penguins3 = [(convert(prx), convert(pry), 'R'), (convert(pyx), convert(pyy), 'Y'), (convert(pbx), convert(pby), 'B'), (convert(pgx), convert(pgy), 'G')]
         fish1 = (convert(fx), convert(fy), f_color)
         fish2 = (convert(fx), convert(fy), f_color)
         fish3 = (convert(fx), convert(fy), f_color)
